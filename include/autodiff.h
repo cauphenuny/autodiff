@@ -133,13 +133,13 @@ public:
         return *this;
     }
 
-    friend variable operator+(variable var);
-    friend variable operator+(variable left, variable right);
-    friend variable operator-(variable var);
-    friend variable operator-(variable left, variable right);
-    friend variable operator*(variable left, variable right);
-    friend variable operator*(variable var, value_type scalar);
-    friend variable operator/(variable left, variable right);
+    friend variable operator+(const variable& var);
+    friend variable operator+(const variable& left, const variable& right);
+    friend variable operator-(const variable& var);
+    friend variable operator-(const variable& left, const variable& right);
+    friend variable operator*(const variable& left, const variable& right);
+    friend variable operator/(const variable& left, const variable& right);
+    friend variable operator^(const variable& left, const variable& right);
 
     void clear() { this->node->diff = 0; }
     void propagate(bool remain = false)
