@@ -184,6 +184,9 @@ constexpr const char* op_name(ops id)
         case ops::abso: return "abs  ";
         case ops::power: return "pow  ";
         case ops::sqroot: return "sqrt ";
+        case ops::sin_h: return "sinh ";
+        case ops::cos_h: return "cosh ";
+        case ops::tan_h: return "tanh ";
     }
     return "unknown";
 }
