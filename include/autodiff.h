@@ -18,6 +18,9 @@ enum ops {
     arcsin,   // asin(a)
     arccos,   // acos(a)
     arctan,   // acos(a)
+    sin_h,    // sinh(a)
+    cos_h,    // cosh(a)
+    tan_h,    // tanh(a)
     sqroot,   // sqrt(a)
     power,    // a ^ b
     abso,     // abs(a)
@@ -102,7 +105,7 @@ public:
     variable(variable&& var) : node(var.node), value(var.value)
     {
         var.node = nullptr;
-        std::cerr << "moved" << std::endl;
+        // std::cerr << "moved" << std::endl;
     }
 
     ~variable()
@@ -130,6 +133,7 @@ public:
         return *this;
     }
 
+    friend variable operator+(variable var);
     friend variable operator+(variable left, variable right);
     friend variable operator-(variable var);
     friend variable operator-(variable left, variable right);
@@ -164,4 +168,7 @@ public:
     friend variable pow(const variable& a, const variable& b);
     friend variable abs(const variable& var);
     friend variable pow(const variable& var);
+    friend variable sinh(const variable& var);
+    friend variable cosh(const variable& var);
+    friend variable tanh(const variable& var);
 };

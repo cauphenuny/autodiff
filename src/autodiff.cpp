@@ -144,6 +144,18 @@ void tape_node::propagate()
                 l->diff += cur->diff * r->value * std::pow(l->value, r->value - 1);
                 r->diff += cur->diff * std::pow(l->value, r->value) * std::log(l->value);
                 break;
+            case ops::sin_h:
+                deg[l]--;
+                l->diff += cur->diff * std::cosh(l->value);
+                break;
+            case ops::cos_h:
+                deg[l]--;
+                l->diff += cur->diff * std::sinh(l->value);
+                break;
+            case ops::tan_h:
+                deg[l]--;
+                l->diff += cur->diff / (std::cosh(l->value) * std::cosh(l->value));
+                break;
         }
         //std::cerr << std::format("left: {}, refcnt: {}\n", l->id(), deg[l]);
         //std::cerr << std::format("right: {}, refcnt: {}\n", r->id(), deg[r]);
@@ -211,6 +223,7 @@ std::istream& operator>>(std::istream& os, const variable& v)
     return os;
 }
 
+variable operator+(variable v) { return variable(v); }
 variable operator+(variable a, variable b)
 {
     return variable(new tape_node(
@@ -284,4 +297,19 @@ variable pow(const variable& a, const variable& b)
 {
     return variable(
         new tape_node(std::pow(a.node->value, b.node->value), ops::power, a.node, b.node));
+}
+variable sinh(const variable& var)
+{
+    return variable(new tape_node(
+        std::sinh(var.node->value), ops::sin_h, var.node, nullptr));
+}
+variable cosh(const variable& var)
+{
+    return variable(new tape_node(
+        std::cosh(var.node->value), ops::cos_h, var.node, nullptr));
+}
+variable tanh(const variable& var)
+{
+    return variable(new tape_node(
+        std::tanh(var.node->value), ops::tan_h, var.node, nullptr));
 }
