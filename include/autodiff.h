@@ -62,7 +62,7 @@ public:
     friend std::istream& operator>>(std::istream& os, const tape_node& v);
 };
 
-class variable
+class var
 {
 private:
 public:
@@ -71,7 +71,7 @@ public:
     value_type operator()() { return value; }
     value_type diff() { return node->diff; }
 
-    variable(value_type value = 0, bool require_diff = true)
+    var(value_type value = 0, bool require_diff = true)
         : value(value), node(new tape_node(value))
     {
         node->count++;
@@ -82,7 +82,7 @@ public:
         //     std::cerr << "node(nullptr)" << std::endl;
     }
 
-    variable(tape_node* node) : node(node), value(node->value)
+    var(tape_node* node) : node(node), value(node->value)
     {
         node->count++;
         // std::cerr << "created " << node->id() << std::endl;
@@ -92,23 +92,23 @@ public:
         //     std::cerr << "node(nullptr)" << std::endl;
     }
 
-    variable(const variable& var) : node(var.node), value(var.value)
+    var(const var& v) : node(v.node), value(v.value)
     {
         node->count++;
-        // node = new tape_node(var.node->value, ops::eq, var.node);
+        // node = new tape_node(v.node->value, ops::eq, v.node);
         // if (node != nullptr)
         //    std::cerr << "added " << node->id() << std::endl;
         // else
         //    std::cerr << "node(nullptr)" << std::endl;
     }
 
-    variable(variable&& var) : node(var.node), value(var.value)
+    var(var&& v) : node(v.node), value(v.value)
     {
-        var.node = nullptr;
+        v.node = nullptr;
         // std::cerr << "moved" << std::endl;
     }
 
-    ~variable()
+    ~var()
     {
         if (node != nullptr) {
             node->count--;
@@ -124,22 +124,22 @@ public:
         }
     }
 
-    variable& operator=(const variable& other)
+    var& operator=(const var& other)
     {
         if (this == &other) return *this;
-        variable::~variable();
+        var::~var();
         node = other.node;
         node->count++;
         return *this;
     }
 
-    friend variable operator+(const variable& var);
-    friend variable operator+(const variable& left, const variable& right);
-    friend variable operator-(const variable& var);
-    friend variable operator-(const variable& left, const variable& right);
-    friend variable operator*(const variable& left, const variable& right);
-    friend variable operator/(const variable& left, const variable& right);
-    friend variable operator^(const variable& left, const variable& right);
+    friend var operator+(const var& v);
+    friend var operator+(const var& left, const var& right);
+    friend var operator-(const var& v);
+    friend var operator-(const var& left, const var& right);
+    friend var operator*(const var& left, const var& right);
+    friend var operator/(const var& left, const var& right);
+    friend var operator^(const var& left, const var& right);
 
     void clear() { this->node->diff = 0; }
     void propagate(bool remain = false)
@@ -150,25 +150,25 @@ public:
         }
         node->propagate();
         if (!remain) {
-            variable::~variable();
+            var::~var();
         }
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const variable& v);
-    friend std::istream& operator>>(std::istream& is, const variable& v);
-    friend variable sqrt(const variable& var);
-    friend variable log(const variable& var);
-    friend variable exp(const variable& var);
-    friend variable sin(const variable& var);
-    friend variable cos(const variable& var);
-    friend variable tan(const variable& var);
-    friend variable asin(const variable& var);
-    friend variable acos(const variable& var);
-    friend variable atan(const variable& var);
-    friend variable pow(const variable& a, const variable& b);
-    friend variable abs(const variable& var);
-    friend variable pow(const variable& var);
-    friend variable sinh(const variable& var);
-    friend variable cosh(const variable& var);
-    friend variable tanh(const variable& var);
+    friend std::ostream& operator<<(std::ostream& os, const var& v);
+    friend std::istream& operator>>(std::istream& is, const var& v);
+    friend var sqrt(const var& v);
+    friend var log(const var& v);
+    friend var exp(const var& v);
+    friend var sin(const var& v);
+    friend var cos(const var& v);
+    friend var tan(const var& v);
+    friend var asin(const var& v);
+    friend var acos(const var& v);
+    friend var atan(const var& v);
+    friend var pow(const var& a, const var& b);
+    friend var abs(const var& v);
+    friend var pow(const var& v);
+    friend var sinh(const var& v);
+    friend var cosh(const var& v);
+    friend var tanh(const var& v);
 };

@@ -54,10 +54,10 @@ void tape_node::remove()
 void tape_node::propagate()
 {
     std::map<tape_node*, int> deg;
-    std::function<void(tape_node*)> find = [&](tape_node* var) {
-        if (deg.count(var)) return;
-        deg[var] = 0;
-        auto l = var->left, r = var->right;
+    std::function<void(tape_node*)> find = [&](tape_node* v) {
+        if (deg.count(v)) return;
+        deg[v] = 0;
+        auto l = v->left, r = v->right;
         if (l != nullptr) find(l), deg[l]++;
         if (r != nullptr) find(r), deg[r]++;
     };
@@ -218,105 +218,105 @@ std::istream& operator>>(std::istream& is, const tape_node& v)
     return is;
 }
 
-std::ostream& operator<<(std::ostream& os, const variable& v)
+std::ostream& operator<<(std::ostream& os, const var& v)
 {
     os << v.node->value;
     return os;
 }
-std::istream& operator>>(std::istream& os, const variable& v)
+std::istream& operator>>(std::istream& os, const var& v)
 {
     os >> v.node->value;
     return os;
 }
 
-variable operator+(const variable& v) { return variable(v); }
-variable operator+(const variable& a, const variable& b)
+var operator+(const var& v) { return var(v); }
+var operator+(const var& a, const var& b)
 {
-    return variable(new tape_node(
+    return var(new tape_node(
         a.node->value + b.node->value, ops::plus, a.node, b.node));
 }
-variable operator-(const variable& v)
+var operator-(const var& v)
 {
-    return variable(new tape_node(-v.node->value, ops::oppo, v.node));
+    return var(new tape_node(-v.node->value, ops::oppo, v.node));
 }
-variable operator-(const variable& a, const variable& b)
+var operator-(const var& a, const var& b)
 {
-    return variable(new tape_node(
+    return var(new tape_node(
         a.node->value - b.node->value, ops::minus, a.node, b.node));
 }
-variable operator*(const variable& a, const variable& b)
+var operator*(const var& a, const var& b)
 {
-    return variable(
+    return var(
         new tape_node(a.node->value * b.node->value, ops::mul, a.node, b.node));
 }
-variable operator/(const variable& a, const variable& b)
+var operator/(const var& a, const var& b)
 {
-    return variable(
+    return var(
         new tape_node(a.node->value / b.node->value, ops::div, a.node, b.node));
 }
-variable operator^(const variable& a, const variable& b) { return pow(a, b); }
-variable log(const variable& var)
+var operator^(const var& a, const var& b) { return pow(a, b); }
+var log(const var& v)
 {
-    return variable(
-        new tape_node(std::log(var.node->value), ops::ln, var.node, nullptr));
+    return var(
+        new tape_node(std::log(v.node->value), ops::ln, v.node, nullptr));
 }
-variable sin(const variable& var)
+var sin(const var& v)
 {
-    return variable(
-        new tape_node(std::sin(var.node->value), ops::sine, var.node, nullptr));
+    return var(
+        new tape_node(std::sin(v.node->value), ops::sine, v.node, nullptr));
 }
-variable cos(const variable& var)
+var cos(const var& v)
 {
-    return variable(new tape_node(
-        std::cos(var.node->value), ops::cosine, var.node, nullptr));
+    return var(
+        new tape_node(std::cos(v.node->value), ops::cosine, v.node, nullptr));
 }
-variable tan(const variable& var)
+var tan(const var& v)
 {
-    return variable(new tape_node(
-        std::tan(var.node->value), ops::tangent, var.node, nullptr));
+    return var(
+        new tape_node(std::tan(v.node->value), ops::tangent, v.node, nullptr));
 }
-variable exp(const variable& var)
+var exp(const var& v)
 {
-    return variable(
-        new tape_node(std::exp(var.node->value), ops::expo, var.node, nullptr));
+    return var(
+        new tape_node(std::exp(v.node->value), ops::expo, v.node, nullptr));
 }
-variable sqrt(const variable& var)
+var sqrt(const var& v)
 {
-    return variable(new tape_node(
-        std::sqrt(var.node->value), ops::sqroot, var.node, nullptr));
+    return var(
+        new tape_node(std::sqrt(v.node->value), ops::sqroot, v.node, nullptr));
 }
-variable asin(const variable& var)
+var asin(const var& v)
 {
-    return variable(new tape_node(
-        std::asin(var.node->value), ops::arcsin, var.node, nullptr));
+    return var(
+        new tape_node(std::asin(v.node->value), ops::arcsin, v.node, nullptr));
 }
-variable acos(const variable& var)
+var acos(const var& v)
 {
-    return variable(new tape_node(
-        std::acos(var.node->value), ops::arccos, var.node, nullptr));
+    return var(
+        new tape_node(std::acos(v.node->value), ops::arccos, v.node, nullptr));
 }
-variable atan(const variable& var)
+var atan(const var& v)
 {
-    return variable(new tape_node(
-        std::atan(var.node->value), ops::arctan, var.node, nullptr));
+    return var(
+        new tape_node(std::atan(v.node->value), ops::arctan, v.node, nullptr));
 }
-variable pow(const variable& a, const variable& b)
+var pow(const var& a, const var& b)
 {
-    return variable(new tape_node(
+    return var(new tape_node(
         std::pow(a.node->value, b.node->value), ops::power, a.node, b.node));
 }
-variable sinh(const variable& var)
+var sinh(const var& v)
 {
-    return variable(new tape_node(
-        std::sinh(var.node->value), ops::sin_h, var.node, nullptr));
+    return var(
+        new tape_node(std::sinh(v.node->value), ops::sin_h, v.node, nullptr));
 }
-variable cosh(const variable& var)
+var cosh(const var& v)
 {
-    return variable(new tape_node(
-        std::cosh(var.node->value), ops::cos_h, var.node, nullptr));
+    return var(
+        new tape_node(std::cosh(v.node->value), ops::cos_h, v.node, nullptr));
 }
-variable tanh(const variable& var)
+var tanh(const var& v)
 {
-    return variable(new tape_node(
-        std::tanh(var.node->value), ops::tan_h, var.node, nullptr));
+    return var(
+        new tape_node(std::tanh(v.node->value), ops::tan_h, v.node, nullptr));
 }
