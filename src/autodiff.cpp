@@ -14,18 +14,18 @@
 
 void tape_node::print()
 {
-    std::cerr << id() << "," << refcount << std::endl;
+    std::cerr << id() << "," << count << std::endl;
     if (left != nullptr) {
         std::cerr << std::format(
-                         "{},{} {},{} {}", left->id(), left->refcount, id(),
-                         refcount, op_name(op))
+                         "{},{} {},{} {}", left->id(), left->count, id(), count,
+                         op_name(op))
                   << std::endl;
         left->print();
     }
     if (right != nullptr) {
         std::cerr << std::format(
-                         "{},{} {},{} {}", right->id(), right->refcount, id(),
-                         refcount, op_name(op))
+                         "{},{} {},{} {}", right->id(), right->count, id(),
+                         count, op_name(op))
                   << std::endl;
         right->print();
     }
@@ -34,16 +34,16 @@ void tape_node::print()
 void tape_node::remove()
 {
     if (left != nullptr) {
-        left->refcount--;
-        if (!left->refcount) {
+        left->count--;
+        if (!left->count) {
             left->remove();
             //std::cout << std::format("delete node {}\n", left->id());
             delete left;
         }
     }
     if (right != nullptr) {
-        right->refcount--;
-        if (!right->refcount) {
+        right->count--;
+        if (!right->count) {
             right->remove();
             //std::cout << std::format("delete node {}\n", right->id());
             delete right;
@@ -51,7 +51,7 @@ void tape_node::remove()
     }
 }
 
-void tape_node::backpropagate()
+void tape_node::propagate()
 {
     std::map<tape_node*, int> deg;
     std::function<void(tape_node*)> find = [&](tape_node* var) {
@@ -67,52 +67,82 @@ void tape_node::backpropagate()
     //              << std::endl;
     //}
     std::queue<tape_node*> q;
-    this->dif = 1;
+    this->diff = 1;
     q.push(this);
     while (q.size()) {
         tape_node* cur = q.front();
         //debugln(cur->to_string());
         q.pop();
+        // if (!cur->require_diff) continue;
         tape_node *l = cur->left, *r = cur->right;
         switch (cur->op) {
             case ops::none: continue;
-            case ops::eq: deg[l]--, l->dif += cur->dif; break;
-            case ops::oppo: deg[l]--, l->dif -= cur->dif; break;
+            case ops::oppo: deg[l]--, l->diff -= cur->diff; break;
             case ops::plus:
                 deg[l]--, deg[r]--;
-                l->dif += cur->dif;
-                r->dif += cur->dif;
+                l->diff += cur->diff;
+                r->diff += cur->diff;
                 break;
             case ops::minus:
                 deg[l]--, deg[r]--;
-                l->dif += cur->dif;
-                r->dif -= cur->dif;
+                l->diff += cur->diff;
+                r->diff -= cur->diff;
                 break;
             case ops::mul:
                 deg[l]--, deg[r]--;
-                l->dif += cur->dif * r->value;
-                r->dif += cur->dif * l->value;
+                l->diff += cur->diff * r->value;
+                r->diff += cur->diff * l->value;
                 break;
             case ops::div:
                 deg[l]--, deg[r]--;
-                l->dif += cur->dif / r->value;
-                r->dif -= cur->dif * l->value / (r->value * r->value);
+                l->diff += cur->diff / r->value;
+                r->diff -= cur->diff * l->value / (r->value * r->value);
                 break;
-            case ops::oplog:
+            case ops::sqroot:
                 deg[l]--;
-                l->dif += cur->dif / l->value;
+                l->diff += cur->diff / (2 * std::sqrt(l->value));
                 break;
-            case ops::opsin:
+            case ops::abso:
                 deg[l]--;
-                l->dif += cur->dif * std::cos(l->value);
+                l->diff += cur->diff * (l->value >= 0 ? 1 : -1);
                 break;
-            case ops::opcos:
+            case ops::ln:
                 deg[l]--;
-                l->dif -= cur->dif * std::sin(l->value);
+                l->diff += cur->diff / l->value;
                 break;
-            case ops::optan:
+            case ops::expo:
                 deg[l]--;
-                l->dif += cur->dif / (std::cos(l->value) * std::cos(l->value));
+                l->diff += cur->diff * cur->value;
+                break;
+            case ops::sine:
+                deg[l]--;
+                l->diff += cur->diff * std::cos(l->value);
+                break;
+            case ops::cosine:
+                deg[l]--;
+                l->diff -= cur->diff * std::sin(l->value);
+                break;
+            case ops::tangent:
+                deg[l]--;
+                l->diff +=
+                    cur->diff / (std::cos(l->value) * std::cos(l->value));
+                break;
+            case ops::arcsin:
+                deg[l]--;
+                l->diff += cur->diff / std::sqrt(1 - l->value * l->value);
+                break;
+            case ops::arccos:
+                deg[l]--;
+                l->diff -= cur->diff / std::sqrt(1 - l->value * l->value);
+                break;
+            case ops::arctan:
+                deg[l]--;
+                l->diff += cur->diff / (1 + l->value * l->value);
+                break;
+            case ops::power:
+                deg[l]--, deg[r]--;
+                l->diff += cur->diff * r->value * std::pow(l->value, r->value - 1);
+                r->diff += cur->diff * std::pow(l->value, r->value) * std::log(l->value);
                 break;
         }
         //std::cerr << std::format("left: {}, refcnt: {}\n", l->id(), deg[l]);
@@ -122,23 +152,30 @@ void tape_node::backpropagate()
     }
 }
 
-const char* op_name(ops id)
+constexpr const char* op_name(ops id)
 {
     switch (id) {
         case ops::none: return "none ";
-        case ops::eq: return "eq   ";
         case ops::oppo: return "oppo ";
         case ops::plus: return "plus ";
         case ops::minus: return "minus";
         case ops::mul: return "mul  ";
         case ops::div: return "div  ";
-        case ops::oplog: return "log  ";
-        case ops::opsin: return "sin  ";
-        case ops::opcos: return "cos  ";
-        case ops::optan: return "tan  ";
+        case ops::ln: return "log  ";
+        case ops::expo: return "exp  ";
+        case ops::sine: return "sin  ";
+        case ops::cosine: return "cos  ";
+        case ops::tangent: return "tan  ";
+        case ops::arcsin: return "asin ";
+        case ops::arccos: return "acos ";
+        case ops::arctan: return "atan ";
+        case ops::abso: return "abs  ";
+        case ops::power: return "pow  ";
+        case ops::sqroot: return "sqrt ";
     }
     return "unknown";
 }
+
 std::string tape_node::id() const
 {
     return std::format("#{:02X}", (((size_t)this) & 0xfff) >> 4);
@@ -147,9 +184,9 @@ std::string tape_node::id() const
 std::string tape_node::to_string() const
 {
     return std::format(
-        "node(id: {}, op: {}, l/r: {} / {}, value: {}, dif: {})", this->id(),
+        "node(id: {}, op: {}, l/r: {} / {}, value: {}, diff: {})", this->id(),
         op_name(op), left ? left->id() : "   ", right ? right->id() : "   ",
-        value, dif);
+        value, diff);
 }
 
 std::ostream& operator<<(std::ostream& os, const tape_node& v)
@@ -200,21 +237,51 @@ variable operator/(variable a, variable b)
 }
 variable log(const variable& var)
 {
-    return variable(new tape_node(
-        std::log(var.node->value), ops::oplog, var.node, nullptr));
+    return variable(
+        new tape_node(std::log(var.node->value), ops::ln, var.node, nullptr));
 }
 variable sin(const variable& var)
 {
-    return variable(new tape_node(
-        std::sin(var.node->value), ops::opsin, var.node, nullptr));
+    return variable(
+        new tape_node(std::sin(var.node->value), ops::sine, var.node, nullptr));
 }
 variable cos(const variable& var)
 {
     return variable(new tape_node(
-        std::cos(var.node->value), ops::opcos, var.node, nullptr));
+        std::cos(var.node->value), ops::cosine, var.node, nullptr));
 }
 variable tan(const variable& var)
 {
     return variable(new tape_node(
-        std::tan(var.node->value), ops::optan, var.node, nullptr));
+        std::tan(var.node->value), ops::tangent, var.node, nullptr));
+}
+variable exp(const variable& var)
+{
+    return variable(
+        new tape_node(std::exp(var.node->value), ops::expo, var.node, nullptr));
+}
+variable sqrt(const variable& var)
+{
+    return variable(
+        new tape_node(std::sqrt(var.node->value), ops::sqroot, var.node, nullptr));
+}
+variable asin(const variable& var)
+{
+    return variable(
+        new tape_node(std::asin(var.node->value), ops::arcsin, var.node, nullptr));
+}
+variable acos(const variable& var)
+{
+    return variable(
+        new tape_node(std::acos(var.node->value), ops::arccos, var.node, nullptr));
+}
+variable atan(const variable& var)
+{
+    return variable(
+        new tape_node(std::atan(var.node->value), ops::arctan, var.node, nullptr));
+}
+variable pow(const variable& a, const variable& b)
+{
+    return variable(
+        new tape_node(std::pow(a.node->value, b.node->value), ops::power, a.node, b.node));
 }
