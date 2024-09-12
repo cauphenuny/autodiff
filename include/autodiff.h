@@ -34,11 +34,11 @@ using size_type = int;
 class tape_node
 {
 public:
-    ops op;
-    tape_node* left;
-    tape_node* right;
-    value_type value, diff;
-    int count;  // reference count
+    ops op{none};
+    tape_node* left{nullptr};
+    tape_node* right{nullptr};
+    value_type value{0}, diff{0};
+    int count{0};  // reference count
     // bool require_diff;
 
     tape_node(
