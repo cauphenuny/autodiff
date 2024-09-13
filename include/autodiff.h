@@ -131,7 +131,18 @@ public:
         if (this == &other) return *this;
         var::~var();
         node = other.node;
+        value = other.value;
         node->count++;
+        return *this;
+    }
+
+    var& operator=(var&& other)
+    {
+        if (this == &other) return *this;
+        var::~var();
+        node = other.node;
+        value = other.value;
+        other.node = nullptr;
         return *this;
     }
 
@@ -198,7 +209,7 @@ public:
 template <typename... Args> void clear_diff(Args... v) { (v.clear(), ...); }
 
 template <> struct std::formatter<var> : std::formatter<var::value_type> {
-    consteval auto format(const var& v, std::format_context& ctx) const
+    auto format(const var& v, std::format_context& ctx) const
     {
         return std::formatter<var::value_type>::format(v.value, ctx);
     }
