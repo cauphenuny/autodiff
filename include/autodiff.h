@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cassert>
 #include <format>
 #include <iostream>
@@ -6,8 +7,8 @@
 enum ops {
     none,
     oppo,     // -a
-    plus,     // a + b
-    minus,    // a - b
+    add,      // a + b
+    sub,      // a - b
     mul,      // a * b
     div,      // a / b
     ln,       // log(a)
@@ -28,18 +29,17 @@ enum ops {
 
 constexpr const char* op_name(ops);
 
-using value_type = double;
-using size_type = int;
-
 class tape_node
 {
 public:
+    using value_type = double;
+    using size_type = int;
     ops op{none};
     tape_node* left{nullptr};
     tape_node* right{nullptr};
     value_type value{0}, diff{0};
     int count{0};  // reference count
-    // bool require_diff;
+    bool require_diff{true};
 
     tape_node(
         value_type value, ops op = none, tape_node* left = nullptr,
@@ -66,10 +66,12 @@ class var
 {
 private:
 public:
+    using value_type = tape_node::value_type;
+    using size_type = int;
     value_type value;
     tape_node* node;
     value_type operator()() { return value; }
-    value_type diff() { return node->diff; }
+    const value_type diff() const { return node->diff; }
 
     var(value_type value = 0, bool require_diff = true)
         : value(value), node(new tape_node(value))
@@ -132,15 +134,6 @@ public:
         node->count++;
         return *this;
     }
-
-    friend var operator+(const var& v);
-    friend var operator+(const var& left, const var& right);
-    friend var operator-(const var& v);
-    friend var operator-(const var& left, const var& right);
-    friend var operator*(const var& left, const var& right);
-    friend var operator/(const var& left, const var& right);
-    friend var operator^(const var& left, const var& right);
-
     void clear() { this->node->diff = 0; }
     void propagate(bool remain = false)
     {
@@ -153,6 +146,21 @@ public:
             var::~var();
         }
     }
+    void require_diff(bool require_diff) { node->require_diff = require_diff; }
+
+    template <typename... Args> auto derivative(const Args&... args)
+    {
+        propagate();
+        return std::make_tuple(args.diff()...);
+    }
+
+    friend var operator+(const var& v);
+    friend var operator+(const var& left, const var& right);
+    friend var operator-(const var& v);
+    friend var operator-(const var& left, const var& right);
+    friend var operator*(const var& left, const var& right);
+    friend var operator/(const var& left, const var& right);
+    friend var operator^(const var& left, const var& right);
 
     friend std::ostream& operator<<(std::ostream& os, const var& v);
     friend std::istream& operator>>(std::istream& is, const var& v);

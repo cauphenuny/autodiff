@@ -78,12 +78,12 @@ void tape_node::propagate()
         switch (cur->op) {
             case ops::none: continue;
             case ops::oppo: deg[l]--, l->diff -= cur->diff; break;
-            case ops::plus:
+            case ops::add:
                 deg[l]--, deg[r]--;
                 l->diff += cur->diff;
                 r->diff += cur->diff;
                 break;
-            case ops::minus:
+            case ops::sub:
                 deg[l]--, deg[r]--;
                 l->diff += cur->diff;
                 r->diff -= cur->diff;
@@ -172,8 +172,8 @@ constexpr const char* op_name(ops id)
     switch (id) {
         case ops::none: return "none ";
         case ops::oppo: return "oppo ";
-        case ops::plus: return "plus ";
-        case ops::minus: return "minus";
+        case ops::add: return "add  ";
+        case ops::sub: return "sub  ";
         case ops::mul: return "mul  ";
         case ops::div: return "div  ";
         case ops::ln: return "log  ";
@@ -232,8 +232,8 @@ std::istream& operator>>(std::istream& os, const var& v)
 var operator+(const var& v) { return var(v); }
 var operator+(const var& a, const var& b)
 {
-    return var(new tape_node(
-        a.node->value + b.node->value, ops::plus, a.node, b.node));
+    return var(
+        new tape_node(a.node->value + b.node->value, ops::add, a.node, b.node));
 }
 var operator-(const var& v)
 {
@@ -241,8 +241,8 @@ var operator-(const var& v)
 }
 var operator-(const var& a, const var& b)
 {
-    return var(new tape_node(
-        a.node->value - b.node->value, ops::minus, a.node, b.node));
+    return var(
+        new tape_node(a.node->value - b.node->value, ops::sub, a.node, b.node));
 }
 var operator*(const var& a, const var& b)
 {
