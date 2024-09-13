@@ -28,15 +28,15 @@ int main()
     var x = 2, y = 5, z = 3;
     var u = f(x, y, z);
     auto [ux, uy, uz] = u.derivative(x, y, z);
-    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u(), ux,
-                   uy, uz);
+    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n",
+                   u, ux, uy, uz);
     assert(abs((ux + uy + uz) - numdiff(f<T>, eps, x(), y(), z())) < eqeps);
     clear_diff(x, y, z);
 
     var v = g(x, y, z);
     v.propagate();
-    cout << format("v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v(),
-                   x.diff(), y.diff(), z.diff());
+    cout << format("v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n",
+                   v, x.diff(), y.diff(), z.diff());
     assert(abs((x.diff() + y.diff() + z.diff()) -
                numdiff(g<T>, eps, x(), y(), z())) < eqeps);
     x.clear(), y.clear(), z.clear();

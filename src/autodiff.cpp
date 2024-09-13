@@ -37,6 +37,7 @@ void tape_node::remove()
             left->remove();
             // std::cout << std::format("delete node {}\n", left->id());
             delete left;
+            left = nullptr;
         }
     }
     if (right != nullptr) {
@@ -45,6 +46,7 @@ void tape_node::remove()
             right->remove();
             // std::cout << std::format("delete node {}\n", right->id());
             delete right;
+            right = nullptr;
         }
     }
 }

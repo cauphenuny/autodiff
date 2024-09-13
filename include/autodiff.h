@@ -51,7 +51,7 @@ public:
 
     void propagate();
 
-    void remove();
+    void remove();  // delete sub graph, doesn't delete itself
 
     void print();
 
@@ -168,7 +168,7 @@ public:
         }
         node->propagate();
         if (!remain) {
-            var::~var();
+            node->remove();
         }
     }
     void require_diff(bool require_diff) { node->require_diff = require_diff; }
