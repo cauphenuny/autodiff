@@ -16,16 +16,14 @@ void tape_node::print()
 {
     std::cerr << id() << "," << count << std::endl;
     if (left != nullptr) {
-        std::cerr << std::format(
-                         "{},{} {},{} {}", left->id(), left->count, id(), count,
-                         op_name(op))
+        std::cerr << std::format("{},{} {},{} {}", left->id(), left->count,
+                                 id(), count, op_name(op))
                   << std::endl;
         left->print();
     }
     if (right != nullptr) {
-        std::cerr << std::format(
-                         "{},{} {},{} {}", right->id(), right->count, id(),
-                         count, op_name(op))
+        std::cerr << std::format("{},{} {},{} {}", right->id(), right->count,
+                                 id(), count, op_name(op))
                   << std::endl;
         right->print();
     }
@@ -251,7 +249,8 @@ var operator*(const var& a, const var& b)
 }
 var operator/(const var& a, const var& b)
 {
-    return var(new tape_node(a.node->value / b.node->value, ops::divis, a.node, b.node));
+    return var(new tape_node(a.node->value / b.node->value, ops::divis, a.node,
+                             b.node));
 }
 var operator^(const var& a, const var& b) { return pow(a, b); }
 var log(const var& v)
@@ -301,8 +300,8 @@ var atan(const var& v)
 }
 var pow(const var& a, const var& b)
 {
-    return var(new tape_node(
-        std::pow(a.node->value, b.node->value), ops::power, a.node, b.node));
+    return var(new tape_node(std::pow(a.node->value, b.node->value), ops::power,
+                             a.node, b.node));
 }
 var sinh(const var& v)
 {

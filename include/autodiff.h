@@ -41,9 +41,8 @@ public:
     int count{0};  // reference count
     bool require_diff{true};
 
-    tape_node(
-        value_type value, ops op = none, tape_node* left = nullptr,
-        tape_node* right = nullptr)
+    tape_node(value_type value, ops op = none, tape_node* left = nullptr,
+              tape_node* right = nullptr)
         : value(value), op(op), left(left), right(right), diff(0), count(0)
     {
         if (left != nullptr) left->count++;
@@ -136,8 +135,14 @@ public:
         return *this;
     }
 
-    bool operator==(const var& other) const { return abs(value - other.value) < 1e-10; }
-    bool operator!=(const var& other) const { return abs(value - other.value) >= 1e-10; }
+    bool operator==(const var& other) const
+    {
+        return abs(value - other.value) < 1e-10;
+    }
+    bool operator!=(const var& other) const
+    {
+        return abs(value - other.value) >= 1e-10;
+    }
     bool operator<(const var& other) const { return value < other.value; }
     bool operator>(const var& other) const { return value > other.value; }
     bool operator<=(const var& other) const { return value <= other.value; }

@@ -1,6 +1,6 @@
 #pragma once
 #ifdef DEBUG
-#include <iostream>
+#    include <iostream>
 #    define debug(x)    std::cerr << #x << " = " << (x) << " "
 #    define debugln(x)  std::cerr << #x << " = " << (x) << std::endl
 #    define debugf(...) fprintf(stderr, __VA_ARGS__)
@@ -14,6 +14,6 @@
 #else
 #    define debug(x)
 #    define debugln(x)
-#define debugf(...)
+#    define debugf(...)
 #    define debugv(...)
 #endif
