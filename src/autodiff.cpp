@@ -93,7 +93,7 @@ void tape_node::propagate()
                 l->diff += cur->diff * r->value;
                 r->diff += cur->diff * l->value;
                 break;
-            case ops::div:
+            case ops::divis:
                 deg[l]--, deg[r]--;
                 l->diff += cur->diff / r->value;
                 r->diff -= cur->diff * l->value / (r->value * r->value);
@@ -175,7 +175,7 @@ constexpr const char* op_name(ops id)
         case ops::add: return "add  ";
         case ops::sub: return "sub  ";
         case ops::mul: return "mul  ";
-        case ops::div: return "div  ";
+        case ops::divis: return "div  ";
         case ops::ln: return "log  ";
         case ops::expo: return "exp  ";
         case ops::sine: return "sin  ";
@@ -251,8 +251,7 @@ var operator*(const var& a, const var& b)
 }
 var operator/(const var& a, const var& b)
 {
-    return var(
-        new tape_node(a.node->value / b.node->value, ops::div, a.node, b.node));
+    return var(new tape_node(a.node->value / b.node->value, ops::divis, a.node, b.node));
 }
 var operator^(const var& a, const var& b) { return pow(a, b); }
 var log(const var& v)

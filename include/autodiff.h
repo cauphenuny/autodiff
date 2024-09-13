@@ -10,7 +10,7 @@ enum ops {
     add,      // a + b
     sub,      // a - b
     mul,      // a * b
-    div,      // a / b
+    divis,    // a / b
     ln,       // log(a)
     expo,     // exp(a)
     sine,     // sin(a)
