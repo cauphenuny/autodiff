@@ -134,6 +134,16 @@ public:
         node->count++;
         return *this;
     }
+
+    bool operator==(const var& other)
+    {
+        return abs(value - other.value) < 1e-10;
+    }
+    bool operator!=(const var& other)
+    {
+        return abs(value - other.value) >= 1e-10;
+    }
+
     void clear() { this->node->diff = 0; }
     void propagate(bool remain = false)
     {
@@ -180,3 +190,5 @@ public:
     friend var cosh(const var& v);
     friend var tanh(const var& v);
 };
+
+template <typename... Args> void clear_diff(Args... v) { (v.clear(), ...); }
