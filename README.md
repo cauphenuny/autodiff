@@ -1,8 +1,8 @@
 ```cpp
 #include "autodiff.h"
 
+#include <cmath>
 #include <format>
-#include <functional>
 #include <iostream>
 
 using namespace std;
@@ -11,9 +11,7 @@ template <typename T> T f(T x, T y, T z) { return log(x * z) + x * y - sin(y) + 
 
 template <typename T> T g(T x, T y, T z) { return z * pow(x, y); }
 
-double eps = 1e-12;
-
-template <typename Func, typename... Args> double numerical_diff(Func f, Args... args)
+template <typename Func, typename... Args, typename T> auto numdiff(Func f, T eps, Args... args)
 {
     return (f((args + eps)...) - f(args...)) / eps;
 }
@@ -21,17 +19,19 @@ template <typename Func, typename... Args> double numerical_diff(Func f, Args...
 int main()
 {
     using T = var::value_type;
+    T eps = 1e-10;
     var x = 2, y = 5, z = 3;
     var u = f(x, y, z);
     auto [ux, uy, uz] = u.derivative(x, y, z);
-    cout << format("u = {}, ux = {}, uy = {}, uz = {}\n", u(), ux, uy, uz);
-    assert(((ux + uy + uz) - numerical_diff(f<T>, x(), y(), z())) < eps);
+    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u(), ux, uy, uz);
+    assert(abs((ux + uy + uz) - numdiff(f<T>, eps, x(), y(), z())) < eps);
     clear_diff(x, y, z);
 
     var v = g(x, y, z);
     v.propagate();
-    cout << format("v = {}, vx = {}, vy = {}, vz = {}\n", v(), x.diff(), y.diff(), z.diff());
-    assert(((x.diff() + y.diff() + z.diff()) - numerical_diff(g<T>, x(), y(), z())) < eps);
+    cout << format(
+        "v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v(), x.diff(), y.diff(), z.diff());
+    assert(abs((x.diff() + y.diff() + z.diff()) - numdiff(g<T>, eps, x(), y(), z())) < eps);
     x.clear(), y.clear(), z.clear();
     return 0;
 }
