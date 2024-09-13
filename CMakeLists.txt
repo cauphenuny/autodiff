@@ -4,7 +4,7 @@ project(autodiff)
 set(CMAKE_CXX_STANDARD 20)
 
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "No build type selected, default to Release" FORCE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "No build type selected, default to Debug" FORCE)
 endif()
 string (ASCII 27 ESC)
 set(COLOR_GREEN "${ESC}[1;32m")
