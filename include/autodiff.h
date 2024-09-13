@@ -70,6 +70,7 @@ public:
     using size_type = int;
     value_type value;
     tape_node* node;
+    const value_type raw() const { return node->value; }
     value_type operator()() { return value; }
     const value_type diff() const { return node->diff; }
 
@@ -135,14 +136,12 @@ public:
         return *this;
     }
 
-    bool operator==(const var& other)
-    {
-        return abs(value - other.value) < 1e-10;
-    }
-    bool operator!=(const var& other)
-    {
-        return abs(value - other.value) >= 1e-10;
-    }
+    bool operator==(const var& other) const { return abs(value - other.value) < 1e-10; }
+    bool operator!=(const var& other) const { return abs(value - other.value) >= 1e-10; }
+    bool operator<(const var& other) const { return value < other.value; }
+    bool operator>(const var& other) const { return value > other.value; }
+    bool operator<=(const var& other) const { return value <= other.value; }
+    bool operator>=(const var& other) const { return value >= other.value; }
 
     void clear() { this->node->diff = 0; }
     void propagate(bool remain = false)
@@ -192,3 +191,10 @@ public:
 };
 
 template <typename... Args> void clear_diff(Args... v) { (v.clear(), ...); }
+
+template <> struct std::formatter<var> : std::formatter<var::value_type> {
+    consteval auto format(const var& v, std::format_context& ctx) const
+    {
+        return std::formatter<var::value_type>::format(v.value, ctx);
+    }
+};
