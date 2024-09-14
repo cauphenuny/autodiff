@@ -27,12 +27,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 # Set the source directory
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
-set(AUTODIFF_SOURCE ${CMAKE_SOURCE_DIR}/src/autodiff.cpp)
+set(AUTODIFF_SOURCE ${CMAKE_SOURCE_DIR}/include/var.h)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Create the binary library
-add_library(autodiff STATIC ${AUTODIFF_SOURCE})
+# add_library(autodiff STATIC ${AUTODIFF_SOURCE})
 # add_library(autodiff_dyn SHARED ${AUTODIFF_SOURCE})
 # set_target_properties(autodiff_dyn PROPERTIES OUTPUT_NAME "autodiff") 
 
@@ -43,4 +43,4 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(main ${SOURCE_DIR}/main.cpp)
 
 # Link the autodiff library to the main executable
-target_link_libraries(main PRIVATE autodiff)
+# target_link_libraries(main PRIVATE autodiff)

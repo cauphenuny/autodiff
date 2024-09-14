@@ -20,16 +20,16 @@ template <typename Func, typename... Args, typename T> auto numdiff(Func f, T ep
 
 int main()
 {
-    using T = var::value_type;
+    using T = Variable::value_type;
     T eps = 1e-7, eqeps = 1e-4;
-    var x = 2, y = 5, z = 3;
-    var u = f(x, y, z);
+    Variable x = 2, y = 5, z = 3;
+    Variable u = f(x, y, z);
     auto [ux, uy, uz] = u.derivative(x, y, z);
     cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u(), ux, uy, uz);
     assert(abs((ux + uy + uz) - numdiff(f<T>, eps, x(), y(), z())) < eqeps);
     clear_diff(x, y, z);
 
-    var v = g(x, y, z);
+    Variable v = g(x, y, z);
     v.propagate();
     cout << format(
         "v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v(), x.diff(), y.diff(), z.diff());
