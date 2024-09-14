@@ -14,16 +14,16 @@
 
 void tape_node::print()
 {
-    std::cerr << id() << "," << count << std::endl;
+    std::cerr << std::format("{}", to_string()) << std::endl;
     if (left != nullptr) {
-        std::cerr << std::format("{},{} {},{} {}", left->id(), left->count,
-                                 id(), count, op_name(op))
+        std::cerr << std::format("{0} ---{2}--> {1}", left->id(), id(),
+                                 op_name(op))
                   << std::endl;
         left->print();
     }
     if (right != nullptr) {
-        std::cerr << std::format("{},{} {},{} {}", right->id(), right->count,
-                                 id(), count, op_name(op))
+        std::cerr << std::format("{0} ---{2}--> {1}", right->id(), id(),
+                                 op_name(op))
                   << std::endl;
         right->print();
     }
@@ -35,20 +35,22 @@ void tape_node::remove()
         left->count--;
         if (!left->count) {
             left->remove();
-            // std::cout << std::format("delete node {}\n", left->id());
-            delete left;
+            //std::cout << std::format("delete node {}\n", left->id());
             left = nullptr;
+            delete left;
         }
     }
     if (right != nullptr) {
         right->count--;
         if (!right->count) {
             right->remove();
-            // std::cout << std::format("delete node {}\n", right->id());
+            //std::cout << std::format("delete node {}\n", right->id());
             delete right;
             right = nullptr;
         }
     }
+    left = right = nullptr;
+    op = ops::none;
 }
 
 void tape_node::propagate()
@@ -170,41 +172,47 @@ void tape_node::propagate()
 constexpr const char* op_name(ops id)
 {
     switch (id) {
-        case ops::none: return "none ";
-        case ops::oppo: return "oppo ";
-        case ops::add: return "add  ";
-        case ops::sub: return "sub  ";
-        case ops::mul: return "mul  ";
-        case ops::divis: return "div  ";
-        case ops::ln: return "log  ";
-        case ops::expo: return "exp  ";
-        case ops::sine: return "sin  ";
-        case ops::cosine: return "cos  ";
-        case ops::tangent: return "tan  ";
-        case ops::arcsin: return "asin ";
-        case ops::arccos: return "acos ";
-        case ops::arctan: return "atan ";
-        case ops::abso: return "abs  ";
-        case ops::power: return "pow  ";
-        case ops::sqroot: return "sqrt ";
-        case ops::sin_h: return "sinh ";
-        case ops::cos_h: return "cosh ";
-        case ops::tan_h: return "tanh ";
+        case ops::none: return "none";
+        case ops::oppo: return "oppo";
+        case ops::add: return "add";
+        case ops::sub: return "sub";
+        case ops::mul: return "mul";
+        case ops::divis: return "div";
+        case ops::ln: return "log";
+        case ops::expo: return "exp";
+        case ops::sine: return "sin";
+        case ops::cosine: return "cos";
+        case ops::tangent: return "tan";
+        case ops::arcsin: return "asin";
+        case ops::arccos: return "acos";
+        case ops::arctan: return "atan";
+        case ops::abso: return "abs";
+        case ops::power: return "pow";
+        case ops::sqroot: return "sqrt";
+        case ops::sin_h: return "sinh";
+        case ops::cos_h: return "cosh";
+        case ops::tan_h: return "tanh";
     }
     return "unknown";
 }
 
-std::string tape_node::id() const
+const std::string tape_node::id() const
 {
     return std::format("#{:02X}", (((size_t)this) & 0xfff) >> 4);
 }
 
-std::string tape_node::to_string() const
+const std::string tape_node::name() const
+{
+    return std::format("#{:02X}:{:.4}:{}/{}", (((size_t)this) & 0xfff) >> 4,
+                       this->value, this->diff, this->count);
+}
+
+const std::string tape_node::to_string() const
 {
     return std::format(
-        "node(id: {}, op: {}, l/r: {} / {}, value: {}, diff: {})", this->id(),
+        "node(id: {}, op: {}, l/r: {}/{}, v: {}, d: {}, ref: {})", this->id(),
         op_name(op), left ? left->id() : "   ", right ? right->id() : "   ",
-        value, diff);
+        value, diff, count);
 }
 
 std::ostream& operator<<(std::ostream& os, const tape_node& v)

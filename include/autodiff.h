@@ -33,7 +33,6 @@ class tape_node
 {
 public:
     using value_type = double;
-    using size_type = int;
     ops op{none};
     tape_node* left{nullptr};
     tape_node* right{nullptr};
@@ -55,29 +54,29 @@ public:
 
     void print();
 
-    std::string id() const;
-    std::string to_string() const;
+    const std::string id() const;
+    const std::string name() const;
+    const std::string to_string() const;
     friend std::ostream& operator<<(std::ostream& os, const tape_node& v);
     friend std::istream& operator>>(std::istream& os, const tape_node& v);
 };
 
 class var
 {
-private:
 public:
     using value_type = tape_node::value_type;
-    using size_type = int;
     value_type value;
     tape_node* node;
-    const value_type raw() const { return node->value; }
-    value_type operator()() { return value; }
+
+    const value_type raw() const { return value; }
     const value_type diff() const { return node->diff; }
+    value_type operator()() { return value; }
 
     var(value_type value = 0, bool require_diff = true)
         : value(value), node(new tape_node(value))
     {
         node->count++;
-        // std::cerr << "created " << node->id() << std::endl;
+        // std::cerr << "created " << node->id() << ", " << this << std::endl;
         // if (node != nullptr)
         //     std::cerr << node->to_string() << std::endl;
         // else
@@ -87,7 +86,7 @@ public:
     var(tape_node* node) : node(node), value(node->value)
     {
         node->count++;
-        // std::cerr << "created " << node->id() << std::endl;
+        // std::cerr << "copied " << node->id() << ", " << this << std::endl;
         // if (node != nullptr)
         //     std::cerr << node->to_string() << std::endl;
         // else
@@ -97,33 +96,38 @@ public:
     var(const var& v) : node(v.node), value(v.value)
     {
         node->count++;
-        // node = new tape_node(v.node->value, ops::eq, v.node);
+        // std::cerr << "copied " << node->id() << ", " << this << std::endl;
         // if (node != nullptr)
-        //    std::cerr << "added " << node->id() << std::endl;
+        //     std::cerr << node->to_string() << std::endl;
         // else
-        //    std::cerr << "node(nullptr)" << std::endl;
+        //     std::cerr << "node(nullptr)" << std::endl;
     }
 
     var(var&& v) : node(v.node), value(v.value)
     {
         v.node = nullptr;
-        // std::cerr << "moved" << std::endl;
+        // std::cerr << "copied " << node->id() << ", " << this << std::endl;
+        // std::cerr << node->to_string() << std::endl;
     }
 
     ~var()
     {
+        // std::cerr << "-> destructing " << this << std::endl;
         if (node != nullptr) {
             node->count--;
-            // std::cerr << std::format(
-            //     "try delete node {}, remaining {}\n", node->id(),
-            //     node->count);
+            // std::cerr << std::format("try delete node {}, remaining {}\n",
+            // node->id(), node->count);
             if (node->count == 0) {
                 // std::cerr << std::format("delete node {}\n", node->id());
                 node->remove();
                 delete node;
                 node = nullptr;
             }
+            //} else {
+            // std::cerr << std::format("try delete null node, value: {}\n",
+            // value);
         }
+        //std::cerr << "-> destructed." << std::endl;
     }
 
     var& operator=(const var& other)
