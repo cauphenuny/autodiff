@@ -31,7 +31,7 @@ int main()
     cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u(),
     ux, uy, uz);
     assert(abs((ux + uy + uz) - numdiff(f<double>, eps, x0, y0, z0)) < eqeps);
-    clear_diff(x, y, z);
+    clear(x, y, z);
 
     var v = g(x, y, z);
     v.propagate();
@@ -40,5 +40,12 @@ int main()
     assert(abs((x.diff() + y.diff() + z.diff()) -
                numdiff(g<double>, eps, x0, y0, z0)) < eqeps);
     x.clear(), y.clear(), z.clear();
+
+    var nan_number = std::nan("");
+    var a = 1, b = 1, c = 2;
+    assert(a == b);
+    assert(nan_number != a);
+    assert(a < c);
+    assert(a <= c);
     return 0;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <cmath>
+#include <compare>
 #include <format>
 #include <functional>
 #include <iostream>
@@ -358,20 +359,7 @@ public:
     {
         return abs(value - other.value) < 1e-10;
     }
-    bool operator!=(const Variable& other) const
-    {
-        return abs(value - other.value) >= 1e-10;
-    }
-    bool operator<(const Variable& other) const { return value < other.value; }
-    bool operator>(const Variable& other) const { return value > other.value; }
-    bool operator<=(const Variable& other) const
-    {
-        return value <= other.value;
-    }
-    bool operator>=(const Variable& other) const
-    {
-        return value >= other.value;
-    }
+    auto operator<=>(const Variable& other) const = default;
 
     void clear() { this->node->diff = 0; }
     void propagate(bool remain = false)
@@ -500,7 +488,7 @@ public:
     }
 };
 
-template <typename... Args> void clear_diff(Args... v) { (v.clear(), ...); }
+template <typename... Args> void clear(Args... v) { (v.clear(), ...); }
 
 template <typename T> struct std::formatter<Variable<T>> : std::formatter<T> {
     auto format(const Variable<T>& v, std::format_context& ctx) const
