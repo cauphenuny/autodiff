@@ -1,5 +1,4 @@
 #include "autodiff.hpp"
-#include "util.h"
 
 #include <cassert>
 #include <cmath>
@@ -15,6 +14,8 @@ template <typename T> T f(T x, T y, T z)
 
 template <typename T> T g(T x, T y, T z) { return z * pow(x, y); }
 
+#define test 1
+
 auto numdiff(auto f, auto eps, auto... args)
 {
     return (f((args + eps)...) - f(args...)) / eps;
@@ -28,14 +29,14 @@ int main()
     var x = x0, y = y0, z = z0;
     var u = f(x, y, z);
     auto [ux, uy, uz] = u.derivative(x, y, z);
-    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u(),
-    ux, uy, uz);
+    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u, ux, uy,
+                   uz);
     assert(abs((ux + uy + uz) - numdiff(f<double>, eps, x0, y0, z0)) < eqeps);
     clear(x, y, z);
 
     var v = g(x, y, z);
     v.propagate();
-    cout << format("v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v(),
+    cout << format("v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v,
                    x.diff(), y.diff(), z.diff());
     assert(abs((x.diff() + y.diff() + z.diff()) -
                numdiff(g<double>, eps, x0, y0, z0)) < eqeps);

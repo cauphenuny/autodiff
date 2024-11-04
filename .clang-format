@@ -17,7 +17,7 @@ AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 BreakBeforeBinaryOperators: false
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Attach
 IndentWidth: 4
 TabWidth: 4
 IncludeBlocks: Regroup

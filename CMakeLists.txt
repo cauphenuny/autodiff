@@ -3,6 +3,8 @@ project(autodiff)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "No build type selected, default to Debug" FORCE)
 endif()
@@ -25,11 +27,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 # Set the source directory
-set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
-
-set(AUTODIFF_SOURCE ${CMAKE_SOURCE_DIR}/include/var.h)
-
-include_directories(${CMAKE_SOURCE_DIR}/include)
+set(SOURCE_DIR ${CMAKE_SOURCE_DIR})
 
 # Create the binary library
 # add_library(autodiff STATIC ${AUTODIFF_SOURCE})
