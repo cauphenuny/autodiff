@@ -38,7 +38,4 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Add the main executable target
-add_executable(main ${SOURCE_DIR}/main.cpp)
-
-# Link the autodiff library to the main executable
-# target_link_libraries(main PRIVATE autodiff)
+add_executable(demo ${SOURCE_DIR}/demo.cpp)
