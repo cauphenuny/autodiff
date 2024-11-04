@@ -7,22 +7,17 @@
 
 using namespace std;
 
-template <typename T> T f(T x, T y, T z)
-{
+template <typename T> T f(T x, T y, T z) {
     return log(x * z) + x * y - sin(y) + cosh(z);
 }
 
 template <typename T> T g(T x, T y, T z) { return z * pow(x, y); }
 
-#define test 1
-
-auto numdiff(auto f, auto eps, auto... args)
-{
+auto numdiff(auto f, auto eps, auto... args) {
     return (f((args + eps)...) - f(args...)) / eps;
 }
 
-int main()
-{
+int main() {
     double eps = 1e-7, eqeps = 1e-4;
     double x0 = 2, y0 = 5, z0 = 3;
 
