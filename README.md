@@ -25,6 +25,7 @@ auto numdiff(auto f, auto eps, auto... args) {
 int main() {
     double eps = 1e-7, eqeps = 1e-4;
     double x0 = 2, y0 = 5, z0 = 3;
+    using autodiff::var;
 
     var x = x0, y = y0, z = z0;
     var u = f(x, y, z);

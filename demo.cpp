@@ -7,9 +7,7 @@
 
 using namespace std;
 
-template <typename T> T f(T x, T y, T z) {
-    return log(x * z) + x * y - sin(y) + cosh(z);
-}
+template <typename T> T f(T x, T y, T z) { return log(x * z) + x * y - sin(y) + cosh(z); }
 
 template <typename T> T g(T x, T y, T z) { return z * pow(x, y); }
 
@@ -20,21 +18,20 @@ auto numdiff(auto f, auto eps, auto... args) {
 int main() {
     double eps = 1e-7, eqeps = 1e-4;
     double x0 = 2, y0 = 5, z0 = 3;
+    using autodiff::var;
 
     var x = x0, y = y0, z = z0;
     var u = f(x, y, z);
     auto [ux, uy, uz] = u.derivative(x, y, z);
-    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u, ux, uy,
-                   uz);
+    cout << format("u = {:.5}, ux = {:.5}, uy = {:.5}, uz = {:.5}\n", u, ux, uy, uz);
     assert(abs((ux + uy + uz) - numdiff(f<double>, eps, x0, y0, z0)) < eqeps);
     clear(x, y, z);
 
     var v = g(x, y, z);
     v.propagate();
-    cout << format("v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v,
-                   x.diff(), y.diff(), z.diff());
-    assert(abs((x.diff() + y.diff() + z.diff()) -
-               numdiff(g<double>, eps, x0, y0, z0)) < eqeps);
+    auto vx = x.diff(), vy = y.diff(), vz = z.diff();
+    cout << format("v = {:.5}, vx = {:.5}, vy = {:.5}, vz = {:.5}\n", v, vx, vy, vz);
+    assert(abs((vx + vy + vz) - numdiff(g<double>, eps, x0, y0, z0)) < eqeps);
     x.clear(), y.clear(), z.clear();
 
     var nan_number = std::nan("");

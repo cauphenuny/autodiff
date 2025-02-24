@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 #include <cmath>
 #include <format>
 #include <functional>
@@ -21,6 +20,8 @@
 #    define debugf(...)
 #    define debugv(...)
 #endif
+
+namespace autodiff {
 
 enum class Func {
     none,
@@ -82,15 +83,12 @@ public:
 
     explicit TapeNode(T value, Func func = Func::none, TapeNode* left = nullptr,
                       TapeNode* right = nullptr)
-        : func(func), left(left), right(right), value(value), diff(0),
-          count(0) {
+        : func(func), left(left), right(right), value(value), diff(0), count(0) {
         if (left != nullptr) left->count++;
         if (right != nullptr) right->count++;
     }
 
-    std::string id() const {
-        return std::format("#{:02X}", ((size_t)this & 0xfff) >> 4);
-    }
+    std::string id() const { return std::format("#{:02X}", ((size_t)this & 0xfff) >> 4); }
 
     std::string name() const {
         return std::format("#{:02X}:{:.4}:{}/{}", ((size_t)this & 0xfff) >> 4,
@@ -98,10 +96,9 @@ public:
     }
 
     std::string to_string() const {
-        return std::format(
-            "node(id: {}, func: {}, l/r: {}/{}, v: {}, d: {}, ref: {})",
-            this->id(), func_name(func), left ? left->id() : "   ",
-            right ? right->id() : "   ", value, diff, count);
+        return std::format("node(id: {}, func: {}, l/r: {}/{}, v: {}, d: {}, ref: {})",
+                           this->id(), func_name(func), left ? left->id() : "   ",
+                           right ? right->id() : "   ", value, diff, count);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const TapeNode& v) {
@@ -123,108 +120,76 @@ public:
             if (r != nullptr) find(r), deg[r]++;
         };
         find(this);
-        // for (auto [p, cnt] : deg) {
-        //     std::cerr << std::format("selected: {}, refcnt: {}", p->id(),
-        //     cnt)
-        //               << std::endl;
-        // }
         std::queue<TapeNode*> q;
         this->diff = 1;
         q.push(this);
         while (q.size()) {
             TapeNode* cur = q.front();
-            // debugln(cur->to_string());
             q.pop();
-            // if (!cur->require_diff) continue;
             TapeNode *l = cur->left, *r = cur->right;
             switch (cur->func) {
                 case Func::none: continue;
                 case Func::oppo: deg[l]--, l->diff -= cur->diff; break;
                 case Func::add:
-                    deg[l]--, deg[r]--;
-                    l->diff += cur->diff;
-                    r->diff += cur->diff;
+                    deg[l]--, l->diff += cur->diff;
+                    deg[r]--, r->diff += cur->diff;
                     break;
                 case Func::sub:
-                    deg[l]--, deg[r]--;
-                    l->diff += cur->diff;
-                    r->diff -= cur->diff;
+                    deg[l]--, l->diff += cur->diff;
+                    deg[r]--, r->diff -= cur->diff;
                     break;
                 case Func::mul:
-                    deg[l]--, deg[r]--;
-                    l->diff += cur->diff * r->value;
-                    r->diff += cur->diff * l->value;
+                    deg[l]--, l->diff += cur->diff * r->value;
+                    deg[r]--, r->diff += cur->diff * l->value;
                     break;
                 case Func::div:
-                    deg[l]--, deg[r]--;
-                    l->diff += cur->diff / r->value;
-                    r->diff -= cur->diff * l->value / (r->value * r->value);
+                    deg[l]--, l->diff += cur->diff / r->value;
+                    deg[r]--, r->diff -= cur->diff * l->value / (r->value * r->value);
                     break;
                 case Func::sqrt:
-                    deg[l]--;
-                    l->diff += cur->diff / (2 * std::sqrt(l->value));
+                    deg[l]--, l->diff += cur->diff / (2 * std::sqrt(l->value));
                     break;
                 case Func::abs:
-                    deg[l]--;
-                    l->diff += cur->diff * (l->value >= 0 ? 1 : -1);
+                    deg[l]--, l->diff += cur->diff * (l->value >= 0 ? 1 : -1);
                     break;
-                case Func::log:
-                    deg[l]--;
-                    l->diff += cur->diff / l->value;
-                    break;
-                case Func::exp:
-                    deg[l]--;
-                    l->diff += cur->diff * cur->value;
-                    break;
+                case Func::log: deg[l]--, l->diff += cur->diff / l->value; break;
+                case Func::exp: deg[l]--, l->diff += cur->diff * cur->value; break;
                 case Func::sin:
-                    deg[l]--;
-                    l->diff += cur->diff * std::cos(l->value);
+                    deg[l]--, l->diff += cur->diff * std::cos(l->value);
                     break;
                 case Func::cos:
-                    deg[l]--;
-                    l->diff -= cur->diff * std::sin(l->value);
+                    deg[l]--, l->diff -= cur->diff * std::sin(l->value);
                     break;
                 case Func::tan:
-                    deg[l]--;
-                    l->diff +=
-                        cur->diff / (std::cos(l->value) * std::cos(l->value));
+                    deg[l]--,
+                        l->diff += cur->diff / (std::cos(l->value) * std::cos(l->value));
                     break;
                 case Func::asin:
-                    deg[l]--;
-                    l->diff += cur->diff / std::sqrt(1 - l->value * l->value);
+                    deg[l]--, l->diff += cur->diff / std::sqrt(1 - l->value * l->value);
                     break;
                 case Func::acos:
-                    deg[l]--;
-                    l->diff -= cur->diff / std::sqrt(1 - l->value * l->value);
+                    deg[l]--, l->diff -= cur->diff / std::sqrt(1 - l->value * l->value);
                     break;
                 case Func::atan:
-                    deg[l]--;
-                    l->diff += cur->diff / (1 + l->value * l->value);
+                    deg[l]--, l->diff += cur->diff / (1 + l->value * l->value);
                     break;
                 case Func::power:
-                    deg[l]--, deg[r]--;
-                    l->diff +=
-                        cur->diff * r->value * std::pow(l->value, r->value - 1);
-                    r->diff += cur->diff * std::pow(l->value, r->value) *
-                               std::log(l->value);
+                    deg[l]--, l->diff +=
+                              cur->diff * r->value * std::pow(l->value, r->value - 1);
+                    deg[r]--, r->diff += cur->diff * std::pow(l->value, r->value) *
+                                         std::log(l->value);
                     break;
                 case Func::sinh:
-                    deg[l]--;
-                    l->diff += cur->diff * std::cosh(l->value);
+                    deg[l]--, l->diff += cur->diff * std::cosh(l->value);
                     break;
                 case Func::cosh:
-                    deg[l]--;
-                    l->diff += cur->diff * std::sinh(l->value);
+                    deg[l]--, l->diff += cur->diff * std::sinh(l->value);
                     break;
                 case Func::tanh:
-                    deg[l]--;
-                    l->diff +=
-                        cur->diff / (std::cosh(l->value) * std::cosh(l->value));
+                    deg[l]--, l->diff +=
+                              cur->diff / (std::cosh(l->value) * std::cosh(l->value));
                     break;
             }
-            // std::cerr << std::format("left: {}, refcnt: {}\n", l->id(),
-            // deg[l]); std::cerr << std::format("right: {}, refcnt: {}\n",
-            // r->id(), deg[r]);
             if (l != nullptr && !deg[l]) q.push(l);
             if (r != l && r != nullptr && !deg[r]) q.push(r);
         }
@@ -235,7 +200,6 @@ public:
             left->count--;
             if (!left->count) {
                 left->remove();
-                // std::cout << std::format("delete node {}\n", left->id());
                 left = nullptr;
                 delete left;
             }
@@ -244,7 +208,6 @@ public:
             right->count--;
             if (!right->count) {
                 right->remove();
-                // std::cout << std::format("delete node {}\n", right->id());
                 delete right;
                 right = nullptr;
             }
@@ -279,57 +242,26 @@ public:
     T diff() const { return node->diff; }
     T operator()() { return value; }
 
-    Variable(T value = 0, bool require_diff = true)
-        : value(value), node(new TapeNode<T>(value)) {
+    Variable(T value = 0) : value(value), node(new TapeNode<T>(value)) { node->count++; }
+
+    Variable(T value, Func func, TapeNode<T>* left, TapeNode<T>* right) : value(value) {
+        node = new TapeNode<T>(value, func, left, right);
         node->count++;
-        // std::cerr << "created " << node->id() << ", " << this << std::endl;
-        // if (node != nullptr)
-        //     std::cerr << node->to_string() << std::endl;
-        // else
-        //     std::cerr << "node(nullptr)" << std::endl;
     }
 
-    explicit Variable(TapeNode<T>* node) : value(node->value), node(node) {
-        node->count++;
-        // std::cerr << "copied " << node->id() << ", " << this << std::endl;
-        // if (node != nullptr)
-        //     std::cerr << node->to_string() << std::endl;
-        // else
-        //     std::cerr << "node(nullptr)" << std::endl;
-    }
+    Variable(const Variable& v) : value(v.value), node(v.node) { node->count++; }
 
-    Variable(const Variable& v) : value(v.value), node(v.node) {
-        node->count++;
-        // std::cerr << "copied " << node->id() << ", " << this << std::endl;
-        // if (node != nullptr)
-        //     std::cerr << node->to_string() << std::endl;
-        // else
-        //     std::cerr << "node(nullptr)" << std::endl;
-    }
-
-    Variable(Variable&& v) noexcept : value(v.value), node(v.node) {
-        v.node = nullptr;
-        // std::cerr << "copied " << node->id() << ", " << this << std::endl;
-        // std::cerr << node->to_string() << std::endl;
-    }
+    Variable(Variable&& v) noexcept : value(v.value), node(v.node) { v.node = nullptr; }
 
     ~Variable() {
-        // std::cerr << "-> destructing " << this << std::endl;
         if (node != nullptr) {
             node->count--;
-            // std::cerr << std::format("try delete node {}, remaining {}\n",
-            // node->id(), node->count);
             if (node->count == 0) {
-                // std::cerr << std::format("delete node {}\n", node->id());
                 node->remove();
                 delete node;
                 node = nullptr;
             }
-            //} else {
-            // std::cerr << std::format("try delete null node, value: {}\n",
-            // value);
         }
-        // std::cerr << "-> destructed." << std::endl;
     }
 
     Variable& operator=(const Variable& other) {
@@ -384,87 +316,70 @@ public:
 
     friend Variable operator+(const Variable& v) { return Variable(v); }
     friend Variable operator+(const Variable& a, const Variable& b) {
-        return Variable(new TapeNode<T>(a.node->value + b.node->value,
-                                        Func::add, a.node, b.node));
+        return Variable(a.node->value + b.node->value, Func::add, a.node, b.node);
     }
     friend Variable operator-(const Variable& v) {
-        return Variable(new TapeNode<T>(-v.node->value, Func::oppo, v.node));
+        return Variable(-v.node->value, Func::oppo, v.node);
     }
     friend Variable operator-(const Variable& a, const Variable& b) {
-        return Variable(new TapeNode<T>(a.node->value - b.node->value,
-                                        Func::sub, a.node, b.node));
+        return Variable(a.node->value - b.node->value, Func::sub, a.node, b.node);
     }
     friend Variable operator*(const Variable& a, const Variable& b) {
-        return Variable(new TapeNode<T>(a.node->value * b.node->value,
-                                        Func::mul, a.node, b.node));
+        return Variable(a.node->value * b.node->value, Func::mul, a.node, b.node);
     }
     friend Variable operator/(const Variable& a, const Variable& b) {
-        return Variable(new TapeNode<T>(a.node->value / b.node->value,
-                                        Func::div, a.node, b.node));
+        return Variable(a.node->value / b.node->value, Func::div, a.node, b.node);
     }
-    friend Variable operator^(const Variable& a, const Variable& b) {
-        return pow(a, b);
-    }
+    friend Variable operator^(const Variable& a, const Variable& b) { return pow(a, b); }
     friend Variable log(const Variable& v) {
-        return Variable(new TapeNode<T>(std::log(v.node->value), Func::log,
-                                        v.node, nullptr));
+        return Variable(std::log(v.node->value), Func::log, v.node, nullptr);
     }
     friend Variable sin(const Variable& v) {
-        return Variable(new TapeNode<T>(std::sin(v.node->value), Func::sin,
-                                        v.node, nullptr));
+        return Variable(std::sin(v.node->value), Func::sin, v.node, nullptr);
     }
     friend Variable cos(const Variable& v) {
-        return Variable(new TapeNode<T>(std::cos(v.node->value), Func::cos,
-                                        v.node, nullptr));
+        return Variable(std::cos(v.node->value), Func::cos, v.node, nullptr);
     }
     friend Variable tan(const Variable& v) {
-        return Variable(new TapeNode<T>(std::tan(v.node->value), Func::tan,
-                                        v.node, nullptr));
+        return Variable(std::tan(v.node->value), Func::tan, v.node, nullptr);
     }
     friend Variable exp(const Variable& v) {
-        return Variable(new TapeNode<T>(std::exp(v.node->value), Func::exp,
-                                        v.node, nullptr));
+        return Variable(std::exp(v.node->value), Func::exp, v.node, nullptr);
     }
     friend Variable sqrt(const Variable& v) {
-        return Variable(new TapeNode<T>(std::sqrt(v.node->value), Func::sqrt,
-                                        v.node, nullptr));
+        return Variable(std::sqrt(v.node->value), Func::sqrt, v.node, nullptr);
     }
     friend Variable asin(const Variable& v) {
-        return Variable(new TapeNode<T>(std::asin(v.node->value), Func::asin,
-                                        v.node, nullptr));
+        return Variable(std::asin(v.node->value), Func::asin, v.node, nullptr);
     }
     friend Variable acos(const Variable& v) {
-        return Variable(new TapeNode<T>(std::acos(v.node->value), Func::acos,
-                                        v.node, nullptr));
+        return Variable(std::acos(v.node->value), Func::acos, v.node, nullptr);
     }
     friend Variable atan(const Variable& v) {
-        return Variable(new TapeNode<T>(std::atan(v.node->value), Func::atan,
-                                        v.node, nullptr));
+        return Variable(std::atan(v.node->value), Func::atan, v.node, nullptr);
     }
     friend Variable pow(const Variable& a, const Variable& b) {
-        return Variable(new TapeNode<T>(std::pow(a.node->value, b.node->value),
-                                        Func::power, a.node, b.node));
+        return Variable(std::pow(a.node->value, b.node->value), Func::power, a.node,
+                        b.node);
     }
     friend Variable sinh(const Variable& v) {
-        return Variable(new TapeNode<T>(std::sinh(v.node->value), Func::sinh,
-                                        v.node, nullptr));
+        return Variable(std::sinh(v.node->value), Func::sinh, v.node, nullptr);
     }
     friend Variable cosh(const Variable& v) {
-        return Variable(new TapeNode<T>(std::cosh(v.node->value), Func::cosh,
-                                        v.node, nullptr));
+        return Variable(std::cosh(v.node->value), Func::cosh, v.node, nullptr);
     }
     friend Variable tanh(const Variable& v) {
-        return Variable(new TapeNode<T>(std::tanh(v.node->value), Func::tanh,
-                                        v.node, nullptr));
+        return Variable(std::tanh(v.node->value), Func::tanh, v.node, nullptr);
     }
 };
+using var = Variable<double>;
+
+};  // namespace autodiff
 
 template <typename... Args> void clear(Args... v) { (v.clear(), ...); }
 
-template <typename T> struct std::formatter<Variable<T>> : std::formatter<T> {
-    auto format(const Variable<T>& v, std::format_context& ctx) const {
+template <typename T> struct std::formatter<autodiff::Variable<T>> : std::formatter<T> {
+    auto format(const autodiff::Variable<T>& v, std::format_context& ctx) const {
         return std::formatter<T>::format(v.value, ctx);
     }
 };
-
-using var = Variable<double>;

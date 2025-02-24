@@ -25,5 +25,5 @@ IndentPPDirectives: AfterHash
 UseTab: Never
 SortIncludes: true
 PointerAlignment: Left
-ColumnLimit: 80
+ColumnLimit: 90
 ...
