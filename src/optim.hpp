@@ -1,5 +1,5 @@
 #pragma once
-#include "propagate.hpp"
+#include "autodiff.hpp"
 
 #include <initializer_list>
 #include <set>

@@ -1,18 +1,16 @@
 #pragma once
+#include "autodiff.hpp"
 #include "lib/magic_enum.hpp"
-#include "propagate.hpp"
 #include "util.hpp"
 
 #include <cmath>
 #include <format>
-#include <iostream>
-#include <istream>
 
 template <typename T> class Arithmetic : public Operation<T> {
 public:
     // clang-format off
     enum class Type {
-        none, oppo, add, sub, mul, div,
+        oppo, add, sub, mul, div,
         log, exp, sin, cos, tan,
         asin, acos, atan, sinh, cosh, tanh,
         sqrt, power, abs
@@ -23,7 +21,6 @@ public:
         using namespace std;
         auto coef = [&]() -> T {
             switch (type) {
-                case Type::none: return 1;
                 case Type::oppo: return -1;
                 case Type::sqrt: return 0.5 / sqrt(arg);
                 case Type::abs: return arg >= 0 ? 1 : -1;
@@ -45,9 +42,31 @@ public:
         }();
         return coef * diff;
     }
+    T forward(const T& arg) const override {
+        using namespace std;
+        switch (type) {
+            case Type::oppo: return -arg;
+            case Type::sqrt: return sqrt(arg);
+            case Type::abs: return abs(arg);
+            case Type::log: return log(arg);
+            case Type::exp: return exp(arg);
+            case Type::sin: return sin(arg);
+            case Type::cos: return cos(arg);
+            case Type::tan: return tan(arg);
+            case Type::asin: return asin(arg);
+            case Type::acos: return acos(arg);
+            case Type::atan: return atan(arg);
+            case Type::sinh: return sinh(arg);
+            case Type::cosh: return cosh(arg);
+            case Type::tanh: return tanh(arg);
+            default:
+                runtimeError("invalid func type {} for unary forward",
+                             magic_enum::enum_name(type));
+        }
+    }
     std::tuple<T, T> backward(const T& diff, const T& lhs, const T& rhs) const override {
         using namespace std;
-        auto [dl, dr] = [&]() -> std::tuple<T, T> {
+        auto [coef_l, coef_r] = [&]() -> std::tuple<T, T> {
             switch (type) {
                 case Type::add: return {1, 1};
                 case Type::sub: return {1, -1};
@@ -60,7 +79,20 @@ public:
                                  magic_enum::enum_name(type));
             }
         }();
-        return {dl * diff, dr * diff};
+        return {coef_l * diff, coef_r * diff};
+    }
+    T forward(const T& lhs, const T& rhs) const override {
+        using namespace std;
+        switch (type) {
+            case Type::add: return lhs + rhs;
+            case Type::sub: return lhs - rhs;
+            case Type::mul: return lhs * rhs;
+            case Type::div: return lhs / rhs;
+            case Type::power: return pow(lhs, rhs);
+            default:
+                runtimeError("invalid func type {} for binary forward",
+                             magic_enum::enum_name(type));
+        }
     }
     Arithmetic(Type type) : type(type) {
         switch (type) {
@@ -69,7 +101,6 @@ public:
             case Type::mul:
             case Type::div:
             case Type::power: this->op_type = Operation<T>::OpType::binary; break;
-            case Type::none: this->op_type = Operation<T>::OpType::none; break;
             default: this->op_type = Operation<T>::OpType::unary; break;
         }
     }
@@ -92,95 +123,33 @@ template <typename T> ArithmeticFuncTable<T> func_table;
 
 template <typename T> class Variable : public AutoDiff<T> {
 public:
-    TapeNode<T>* node;
-
-    const T& raw() const override { return node->value(); }
-    T& raw() override { return node->value(); }
-    T diff() const override { return node->diff(); }
     T initial_diff() const override { return 1; }
-    void clear() override { this->node->clear(); }
 
-    Variable(T value = 0)
-        : node(new TapeNode<T>(value, func_table<T>(Arithmetic<T>::Type::none))) {}
+    Variable(T value = 0) : AutoDiff<T>(value) {}
 
-    Variable(T value, Arithmetic<T>::Type type, TapeNode<T>* left,
-             TapeNode<T>* right = nullptr)
-        : node(new TapeNode<T>(value, func_table<T>(type), left, right)) {}
-
-    Variable(const Variable& v) : node(v.node) { node->add_ref(); }
-
-    Variable(Variable&& v) noexcept : node(v.node) { v.node = nullptr; }
-
-    ~Variable() {
-        if (node != nullptr) {
-            node->remove_ref();
-            if (!node->ref_count()) delete node;
-            node = nullptr;
-        }
-    }
-
-    Variable& operator=(const Variable& other) {
-        if (this == &other) return *this;
-        Variable::~Variable();
-        node = other.node;
-        node->add_ref();
-        return *this;
-    }
-
-    Variable& operator=(Variable&& other) noexcept {
-        if (this == &other) return *this;
-        Variable::~Variable();
-        node = other.node;
-        other.node = nullptr;
-        return *this;
-    }
+    Variable(Arithmetic<T>::Type type, const auto&... args)
+        : AutoDiff<T>(func_table<T>(type), args...) {}
 
     bool operator==(const Variable& other) const {
-        return abs(raw() - other.raw()) < 1e-10;
+        return abs(this->raw() - other.raw()) < 1e-10;
     }
-    auto operator<=>(const Variable& other) const { return raw() - other.raw(); }
-
-    void propagate(bool remain_graph = false) override {
-        if (node == nullptr) {
-            runtimeError("propagate nullptr");
-        }
-        node->propagate();
-        if (!remain_graph) {
-            node->remove();
-            node = nullptr;
-        }
-    }
-    void require_diff(bool require_diff) { node->require_diff(require_diff); }
-
-    template <typename... Args> auto derivative(const Args&... args) {
-        propagate();
-        return std::make_tuple(args.diff()...);
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Variable& v) {
-        os << v.raw();
-        return os;
-    }
-    friend std::istream& operator>>(std::istream& os, Variable& v) {
-        os >> v.raw();
-        return os;
-    }
+    auto operator<=>(const Variable& other) const { return this->raw() - other.raw(); }
 
     friend Variable operator+(const Variable& v) { return Variable(v); }
     friend Variable operator+(const Variable& a, const Variable& b) {
-        return Variable(a.raw() + b.raw(), Arithmetic<T>::Type::add, a.node, b.node);
+        return Variable(Arithmetic<T>::Type::add, a, b);
     }
     friend Variable operator-(const Variable& v) {
-        return Variable(-v.raw(), Arithmetic<T>::Type::oppo, v.node);
+        return Variable(Arithmetic<T>::Type::oppo, v);
     }
     friend Variable operator-(const Variable& a, const Variable& b) {
-        return Variable(a.raw() - b.raw(), Arithmetic<T>::Type::sub, a.node, b.node);
+        return Variable(Arithmetic<T>::Type::sub, a, b);
     }
     friend Variable operator*(const Variable& a, const Variable& b) {
-        return Variable(a.raw() * b.raw(), Arithmetic<T>::Type::mul, a.node, b.node);
+        return Variable(Arithmetic<T>::Type::mul, a, b);
     }
     friend Variable operator/(const Variable& a, const Variable& b) {
-        return Variable(a.raw() / b.raw(), Arithmetic<T>::Type::div, a.node, b.node);
+        return Variable(Arithmetic<T>::Type::div, a, b);
     }
     friend Variable operator^(const Variable& a, const Variable& b) { return pow(a, b); }
     friend Variable operator+=(const Variable& a, const Variable& b) { a = a + b; }
@@ -188,47 +157,46 @@ public:
     friend Variable operator*=(const Variable& a, const Variable& b) { a = a * b; }
     friend Variable operator/=(const Variable& a, const Variable& b) { a = a / b; }
     friend Variable log(const Variable& v) {
-        return Variable(std::log(v.raw()), Arithmetic<T>::Type::log, v.node);
+        return Variable(Arithmetic<T>::Type::log, v);
     }
     friend Variable sin(const Variable& v) {
-        return Variable(std::sin(v.raw()), Arithmetic<T>::Type::sin, v.node);
+        return Variable(Arithmetic<T>::Type::sin, v);
     }
     friend Variable cos(const Variable& v) {
-        return Variable(std::cos(v.raw()), Arithmetic<T>::Type::cos, v.node);
+        return Variable(Arithmetic<T>::Type::cos, v);
     }
     friend Variable tan(const Variable& v) {
-        return Variable(std::tan(v.raw()), Arithmetic<T>::Type::tan, v.node);
+        return Variable(Arithmetic<T>::Type::tan, v);
     }
     friend Variable exp(const Variable& v) {
-        return Variable(std::exp(v.raw()), Arithmetic<T>::Type::exp, v.node);
+        return Variable(Arithmetic<T>::Type::exp, v);
     }
     friend Variable sqrt(const Variable& v) {
-        return Variable(std::sqrt(v.raw()), Arithmetic<T>::Type::sqrt, v.node);
+        return Variable(Arithmetic<T>::Type::sqrt, v);
     }
     friend Variable asin(const Variable& v) {
-        return Variable(std::asin(v.raw()), Arithmetic<T>::Type::asin, v.node);
+        return Variable(Arithmetic<T>::Type::asin, v);
     }
     friend Variable acos(const Variable& v) {
-        return Variable(std::acos(v.raw()), Arithmetic<T>::Type::acos, v.node);
+        return Variable(Arithmetic<T>::Type::acos, v);
     }
     friend Variable atan(const Variable& v) {
-        return Variable(std::atan(v.raw()), Arithmetic<T>::Type::atan, v.node);
+        return Variable(Arithmetic<T>::Type::atan, v);
     }
     friend Variable pow(const Variable& a, const Variable& b) {
-        return Variable(std::pow(a.raw(), b.raw()), Arithmetic<T>::Type::power, a.node,
-                        b.node);
+        return Variable(Arithmetic<T>::Type::power, a, b);
     }
     friend Variable sinh(const Variable& v) {
-        return Variable(std::sinh(v.raw()), Arithmetic<T>::Type::sinh, v.node);
+        return Variable(Arithmetic<T>::Type::sinh, v);
     }
     friend Variable cosh(const Variable& v) {
-        return Variable(std::cosh(v.raw()), Arithmetic<T>::Type::cosh, v.node);
+        return Variable(Arithmetic<T>::Type::cosh, v);
     }
     friend Variable tanh(const Variable& v) {
-        return Variable(std::tanh(v.raw()), Arithmetic<T>::Type::tanh, v.node);
+        return Variable(Arithmetic<T>::Type::tanh, v);
     }
     friend Variable abs(const Variable& v) {
-        return Variable(std::abs(v.raw()), Arithmetic<T>::Type::abs, v.node);
+        return Variable(Arithmetic<T>::Type::abs, v);
     }
 };
 

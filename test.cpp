@@ -104,6 +104,16 @@ TEST_CASE("compare") {
     CHECK(a <= c);
 }
 
+TEST_CASE("copy") {
+    var a = 1, b = 2;
+    var c = a + b;
+    CHECK(a != c);
+    CHECK(a != b);
+    CHECK(almost_equal(c.raw(), 3));
+    c = c + a;
+    CHECK(almost_equal(c.raw(), 4));
+}
+
 TEST_CASE("fitting") {
     const int N = 100;
     std::vector<double> xs, ys;
