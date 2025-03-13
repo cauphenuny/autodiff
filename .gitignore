@@ -1,8 +1,10 @@
 **/.DS_Store
 .vscode/
 
-*/
 .cache/
+
+.*/
+build/
 
 # Prerequisites
 *.d
