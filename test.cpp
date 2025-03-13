@@ -2,7 +2,7 @@
 
 #include <random>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "lib/doctest.h"
+#include "src/lib/doctest.h"
 #include "src/variable.hpp"
 
 #include <cmath>
@@ -45,9 +45,9 @@ void check_impl(auto f, const std::string& name, auto... args) {
 
 #define check_func(func, ...) check_impl(func, #func, __VA_ARGS__)
 
-TEST_CASE("div") {
-    auto div = [](auto x, auto y) { return x / y; };
-    check_func(div, -4, 3);
+TEST_CASE("add") {
+    auto add = [](auto x, auto y) { return x + y; };
+    check_func(add, -4, 3);
 }
 
 TEST_CASE("complex arithmetic operations") {
