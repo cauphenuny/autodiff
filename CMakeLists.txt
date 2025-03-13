@@ -15,27 +15,25 @@ set(COLOR_RESET "${ESC}[0m")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     message ("-- ${COLOR_RED}Debug mode${COLOR_RESET}")
     add_compile_options(-DDEBUG -g)
-    add_compile_options(-fno-omit-frame-pointer -fsanitize=undefined,address,leak,null,bounds)
-    add_link_options(-fno-omit-frame-pointer -fsanitize=undefined,address,leak,null,bounds)
+    # add_compile_options(-fno-omit-frame-pointer -fsanitize=undefined,address,leak,null,bounds)
+    # add_link_options(-fno-omit-frame-pointer -fsanitize=undefined,address,leak,null,bounds)
 else()
     message ("-- ${COLOR_GREEN}Release mode${COLOR_RESET}")
     add_compile_options(-DRELEASE -O3)
 endif()
 
-# Set the output directory for the binary library
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-
 # Set the source directory
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR})
+
+# # Set the output directory for the binary library
+# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 # Create the binary library
 # add_library(autodiff STATIC ${AUTODIFF_SOURCE})
 # add_library(autodiff_dyn SHARED ${AUTODIFF_SOURCE})
 # set_target_properties(autodiff_dyn PROPERTIES OUTPUT_NAME "autodiff") 
 
-# Set the output directory for the binary executable
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
 # Add the main executable target
 add_executable(demo ${SOURCE_DIR}/demo.cpp)
+add_executable(test ${SOURCE_DIR}/test.cpp)
