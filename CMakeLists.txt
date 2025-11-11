@@ -34,6 +34,9 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR})
 # add_library(autodiff_dyn SHARED ${AUTODIFF_SOURCE})
 # set_target_properties(autodiff_dyn PROPERTIES OUTPUT_NAME "autodiff") 
 
+include_directories(src)
+
 # Add the main executable target
 add_executable(demo ${SOURCE_DIR}/demo.cpp)
-add_executable(test ${SOURCE_DIR}/test.cpp)
+add_executable(test ${SOURCE_DIR}/examples/test.cpp)
+add_executable(xor ${SOURCE_DIR}/examples/xor.cpp)
