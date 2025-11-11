@@ -1,4 +1,3 @@
-#include "autodiff.hpp"
 #include "util.hpp"
 
 #include <initializer_list>
@@ -110,47 +109,6 @@ public:
             _storage[i] = *it;
             ++i;
         }
-    }
-
-    Tensor<T> operator[](std::vector<SliceRange> idx) {
-        std::vector<size_t> new_shape;
-        std::vector<size_t> new_strides;
-        std::vector<size_t> new_offsets;
-        size_t ndim = _shape.size();
-        size_t i = 0, j = 0;
-        for (; i < ndim; ++i) {
-            if (j < idx.size()) {
-                const auto& range = idx[j];
-                size_t dim = (range.end - range.start + range.step - 1) / range.step;
-                new_shape.push_back(dim);
-                new_offsets.push_back(_storage.offsets[i] +
-                                      range.start * _storage.strides[i]);
-                new_strides.push_back(_storage.strides[i] * range.step);
-                ++j;
-            } else {
-                new_shape.push_back(_shape[i]);
-                new_offsets.push_back(_storage.offsets[i]);
-                new_strides.push_back(_storage.strides[i]);
-            }
-        }
-        Storage<T> storage_view(_storage.data(), std::move(new_strides),
-                                std::move(new_offsets));
-        return Tensor<T>(std::move(storage_view), std::move(new_shape));
-    }
-
-    template <typename... SliceRanges> auto operator[](SliceRanges... args) {
-        static_assert((std::is_convertible<SliceRanges, SliceRange>::value && ...),
-                      "All arguments must be convertible to SliceRange");
-        return (*this)[std::vector<SliceRange>{static_cast<SliceRange>(args)...}];
-    }
-
-    // 修改后的 operator[] 接受任意参数，包括整数和 initializer_list
-    template <typename... Args> auto operator[](Args... args) {
-        static_assert((std::is_integral_v<Args> ||
-                       std::is_convertible_v<Args, SliceRange> ||
-                       std::is_convertible_v<Args, std::initializer_list<size_t>>)&&...,
-                      "参数必须是整数、SliceRange或 initializer_list");
-        return (*this)[std::vector<SliceRange>{convertToSliceRange(args)...}];
     }
 
     Tensor<T> operator=(const Tensor<T>& other) {

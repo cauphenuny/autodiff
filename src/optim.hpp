@@ -21,14 +21,14 @@ private:
     }
 
 public:
-    Optimizer(std::initializer_list<AutoDiff<T>*> parameters) { traverse(parameters); }
+    Optimizer(std::vector<AutoDiff<T>*> parameters) { traverse(parameters); }
 };
 
 template <typename T> class GradientDescent : public Optimizer<T> {
     T learning_rate;
 
 public:
-    GradientDescent(std::initializer_list<AutoDiff<T>*> parameters, T learning_rate)
+    GradientDescent(std::vector<AutoDiff<T>*> parameters, T learning_rate)
         : Optimizer<T>(parameters), learning_rate(learning_rate) {}
     void step() {
         for (auto& v : this->params) {
@@ -38,7 +38,7 @@ public:
     }
 };
 template <typename T>
-GradientDescent(std::initializer_list<AutoDiff<T>*> parameters, ...)
+GradientDescent(std::vector<AutoDiff<T>*> parameters, ...)
     -> GradientDescent<T>;
 
 template <typename T> class Adam : public Optimizer<T> {
@@ -50,7 +50,7 @@ template <typename T> class Adam : public Optimizer<T> {
     int t{0};
 
 public:
-    Adam(std::initializer_list<AutoDiff<T>*> parameters, T learning_rate, T beta1 = 0.9,
+    Adam(std::vector<AutoDiff<T>*> parameters, T learning_rate, T beta1 = 0.9,
          T beta2 = 0.999, T epsilon = 1e-8)
         : Optimizer<T>(parameters), learning_rate(learning_rate), beta1(beta1),
           beta2(beta2), epsilon(epsilon) {
