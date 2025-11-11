@@ -18,9 +18,7 @@ public:
     virtual std::tuple<T, T> backward(const T& diff, const T& lhs, const T& rhs) const {
         runtimeError("Not implemented");
     }
-    virtual T forward(const T& arg) const {
-        runtimeError("Not implemented");
-    }
+    virtual T forward(const T& arg) const { runtimeError("Not implemented"); }
     virtual T forward(const T& lhs, const T& rhs) const {
         runtimeError("Not implemented");
     }
@@ -44,8 +42,8 @@ public:
         }
     }
 
-    explicit TapeNode<T>(T value, Operation<T>* oper = nullptr, TapeNode<T>* left = nullptr,
-                         TapeNode<T>* right = nullptr)
+    explicit TapeNode<T>(T value, Operation<T>* oper = nullptr,
+                         TapeNode<T>* left = nullptr, TapeNode<T>* right = nullptr)
         : op(std::move(oper)), lhs(left), rhs(right), _value(value) {
         if (left != nullptr) left->_ref_count++;
         if (right != nullptr) right->_ref_count++;
@@ -116,7 +114,7 @@ public:
     }
 
     void remove() {
-        for (auto child : {lhs, rhs}) {
+        for (auto& child : {lhs, rhs}) {
             if (!child) continue;
             child->remove_ref();
             if (!child->ref_count()) {
@@ -146,6 +144,7 @@ template <typename T> class AutoDiff {
             node = nullptr;
         }
     }
+
 public:
     TapeNode<T>* node;
     const T& raw() const { return node->value(); }
@@ -172,7 +171,7 @@ public:
         other.node = nullptr;
         return *this;
     }
-    AutoDiff<T>(Operation<T>* op, const auto& ...args) {
+    AutoDiff<T>(Operation<T>* op, const auto&... args) {
         node = new TapeNode<T>(op->forward((args.raw())...), op, (args.node)...);
     }
 
