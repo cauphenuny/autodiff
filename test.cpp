@@ -1,4 +1,5 @@
 #include "src/optim.hpp"
+#include "src/tensor.hpp"
 
 #include <random>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
@@ -151,4 +152,10 @@ TEST_CASE("fitting") {
                      b0, k, b, loss));
     CHECK(std::abs((k - k0).raw()) < 1.0);
     CHECK(std::abs((b - b0).raw()) < 1.0);
+}
+
+TEST_CASE("tensor") {
+    auto t = Tensor<double>::ones({2, 3, 4});
+    t[0, {0, 2}, {1, 3}] = Tensor<double>::zeros({2, 2});
+    CHECK(t[0, 0, 1] == 0);
 }
